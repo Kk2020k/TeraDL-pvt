@@ -142,19 +142,19 @@ def format_size(size):
     else:
         return f"{size / (1024 * 1024 * 1024):.2f} GB"
 
-
 @app.on_message(filters.command("start"))
-async def start_command(client: Client, message: Message):
+async def start_command(client, message):
+    sticker_message = await message.reply_sticker("CAACAgIAAxkBAAEYonplzwrczhVu3I6HqPBzro3L2JU6YAACvAUAAj-VzAoTSKpoG9FPRjQE")
+    await asyncio.sleep(2)
+    await sticker_message.delete()
+    user_mention = message.from_user.mention
+    reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
     join_button = InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url="https://t.me/jetmirror")
-    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="https://t.me/rtx5069")
-    repo69 = InlineKeyboardButton("ʀᴇᴘᴏ 🌐", url="https://github.com/Hrishi2861/Terabox-Downloader-Bot")
-    reply_markup = InlineKeyboardMarkup([[join_button, developer_button], [repo69]])
-    final_msg = "🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nYou already have a valid token!"
+    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="https://t.me/hrishikesh2861")
+    reply_markup = InlineKeyboardMarkup([[join_button, developer_button]])
     video_file_id = "/app/Jet-Mirror.mp4"
-    if len(message.command) > 1 and len(message.command[1]) == 36:
-        token = message.command[1]
-        user_id = message.from_user.id
-        if os.path.exists(video_file_id):
+    if os.path.exists(video_file_id):
+        await client.send_video(
             chat_id=message.chat.id,
             video=video_file_id,
             caption=reply_message,
@@ -162,6 +162,7 @@ async def start_command(client: Client, message: Message):
         )
     else:
         await message.reply_text(reply_message, reply_markup=reply_markup)
+
 
 
 async def update_status_message(status_message, text):
