@@ -144,7 +144,7 @@ def format_size(size):
 
 @app.on_message(filters.command("start"))
 async def start_command(client, message):
-    sticker_message = await message.reply_sticker("CAACAgIAAxkBAAEYonplzwrczhVu3I6HqPBzro3L2JU6YAACvAUAAj-VzAoTSKpoG9FPRjQE")
+    sticker_message = await message.reply_sticker("CAACAgUAAxkBAAEOUi5oAR8WrkDyvJ3ZtbtKHU_3wz-dEwACjxAAAshNmVYFPD4yDH_fnjYE")
     await asyncio.sleep(2)
     await sticker_message.delete()
     user_mention = message.from_user.mention
