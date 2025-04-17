@@ -226,7 +226,7 @@ async def start_command(client: Client, message: Message):
         user_id = message.from_user.id
         if not has_valid_token(user_id):
             token = generate_uuid(user_id)
-            long_url = f"https://redirect.jet-mirror.in/{app.me.username}/{token}"
+            long_url = f"https://complete-denyse-nicebots-c23d92c7.koyeb.app/{app.me.username}/{token}"
             short_url = shorten_url(long_url)
             if short_url:
                 reply_markup2 = InlineKeyboardMarkup([[InlineKeyboardButton("Generate Token Link", url=short_url)], [join_button, developer_button], [repo69]])
