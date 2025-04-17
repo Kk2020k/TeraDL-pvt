@@ -6,7 +6,7 @@ import os
 import logging
 import math
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait
 from pymongo import MongoClient
@@ -88,7 +88,6 @@ if len(SHORTENER_API) == 0:
     logging.info("SHORTENER_API variable is missing!")
     SHORTENER_API = None
 
-
 USER_SESSION_STRING = os.environ.get('USER_SESSION_STRING', '')
 if len(USER_SESSION_STRING) == 0:
     logging.info("USER_SESSION_STRING variable is missing! Bot will split Files in 2Gb...")
@@ -116,6 +115,9 @@ VALID_DOMAINS = [
     'teraboxlink.com', 'terafileshare.com'
 ]
 last_update_time = 0
+
+# Dictionary to store active downloads and their status
+active_downloads = {}
 
 async def is_user_member(client, user_id):
     try:
@@ -163,13 +165,34 @@ async def start_command(client, message):
     else:
         await message.reply_text(reply_message, reply_markup=reply_markup)
 
-
-
-async def update_status_message(status_message, text):
+async def update_status_message(status_message, text, reply_markup=None):
     try:
-        await status_message.edit_text(text)
+        await status_message.edit_text(text, reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Failed to update status message: {e}")
+
+@app.on_callback_query()
+async def handle_callback_query(client: Client, callback_query: CallbackQuery):
+    data = callback_query.data
+    user_id = callback_query.from_user.id
+    
+    if data.startswith("cancel_"):
+        gid = data.split("_")[1]
+        if gid in active_downloads:
+            download = active_downloads[gid]["download"]
+            try:
+                await aria2.client.force_pause(gid)
+                await aria2.client.force_remove(gid)
+                await callback_query.answer("Download cancelled!", show_alert=True)
+                status_message = active_downloads[gid]["status_message"]
+                await status_message.edit_text("❌ Download cancelled by user!")
+                if active_downloads[gid]["file_path"] and os.path.exists(active_downloads[gid]["file_path"]):
+                    os.remove(active_downloads[gid]["file_path"])
+                del active_downloads[gid]
+            except Exception as e:
+                await callback_query.answer(f"Failed to cancel download: {e}", show_alert=True)
+        else:
+            await callback_query.answer("Download not found or already completed!", show_alert=True)
 
 @app.on_message(filters.text)
 async def handle_message(client: Client, message: Message):
@@ -201,9 +224,24 @@ async def handle_message(client: Client, message: Message):
     final_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={encoded_url}"
 
     download = aria2.add_uris([final_url])
-    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤")
+    
+    # Add cancel button to status message
+    cancel_button = InlineKeyboardButton("❌ Cancel Download", callback_data=f"cancel_{download.gid}")
+    reply_markup = InlineKeyboardMarkup([[cancel_button]])
+    
+    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤", reply_markup=reply_markup)
 
     start_time = datetime.now()
+    last_non_zero_speed_time = datetime.now()
+    zero_speed_duration = 0  # Track how long speed has been zero
+    
+    # Store download info for cancellation
+    active_downloads[download.gid] = {
+        "download": download,
+        "status_message": status_message,
+        "file_path": None,
+        "user_id": user_id
+    }
 
     while not download.is_complete:
         await asyncio.sleep(15)
@@ -212,26 +250,48 @@ async def handle_message(client: Client, message: Message):
 
         elapsed_time = datetime.now() - start_time
         elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
+        
+        # Check for stalled download (0B/s for 5 minutes)
+        current_speed = download.download_speed
+        if current_speed == 0:
+            zero_speed_duration = (datetime.now() - last_non_zero_speed_time).total_seconds()
+            if zero_speed_duration >= 300:  # 5 minutes (300 seconds)
+                await aria2.client.force_pause(download.gid)
+                await aria2.client.force_remove(download.gid)
+                await update_status_message(
+                    status_message, 
+                    "❌ Download automatically cancelled due to no progress for 5 minutes!",
+                    reply_markup=None
+                )
+                if download.gid in active_downloads:
+                    del active_downloads[download.gid]
+                return
+        else:
+            last_non_zero_speed_time = datetime.now()
+            zero_speed_duration = 0
 
         status_text = (
             f"┏ ғɪʟᴇɴᴀᴍᴇ: {download.name}\n"
             f"┠ [{'★' * int(progress / 10)}{'☆' * (10 - int(progress / 10))}] {progress:.2f}%\n"
-            f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(download.completed_length)} ᴏғ {format_size(download.total_length)}\n"
+            f"┠ �ᴘʀᴏᴄᴇssᴇᴅ: {format_size(download.completed_length)} ᴏғ {format_size(download.total_length)}\n"
             f"┠ sᴛᴀᴛᴜs: 📥 Downloading\n"
             f"┠ ᴇɴɢɪɴᴇ: <b><u>Aria2c v1.37.0</u></b>\n"
             f"┠ sᴘᴇᴇᴅ: {format_size(download.download_speed)}/s\n"
             f"┠ ᴇᴛᴀ: {download.eta} | ᴇʟᴀᴘsᴇᴅ: {elapsed_minutes}m {elapsed_seconds}s\n"
             f"┖ ᴜsᴇʀ: <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a> | ɪᴅ: {user_id}\n"
-            )
+        )
+        
         while True:
             try:
-                await update_status_message(status_message, status_text)
+                await update_status_message(status_message, status_text, reply_markup)
                 break
             except FloodWait as e:
                 logger.error(f"Flood wait detected! Sleeping for {e.value} seconds")
                 await asyncio.sleep(e.value)
 
     file_path = download.files[0].path
+    active_downloads[download.gid]["file_path"] = file_path
+    
     caption = (
         f"✨ {download.name}\n"
         f"👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a>\n"
@@ -243,17 +303,17 @@ async def handle_message(client: Client, message: Message):
     last_update_time = time.time()
     UPDATE_INTERVAL = 15
 
-    async def update_status(message, text):
+    async def update_status(message, text, reply_markup=None):
         nonlocal last_update_time
         current_time = time.time()
         if current_time - last_update_time >= UPDATE_INTERVAL:
             try:
-                await message.edit_text(text)
+                await message.edit_text(text, reply_markup=reply_markup)
                 last_update_time = current_time
             except FloodWait as e:
                 logger.warning(f"FloodWait: Sleeping for {e.value}s")
                 await asyncio.sleep(e.value)
-                await update_status(message, text)
+                await update_status(message, text, reply_markup)
             except Exception as e:
                 logger.error(f"Error updating status: {e}")
 
@@ -404,6 +464,10 @@ async def handle_message(client: Client, message: Message):
                 )
         if os.path.exists(file_path):
             os.remove(file_path)
+        
+        # Remove from active downloads after completion
+        if download.gid in active_downloads:
+            del active_downloads[download.gid]
 
     start_time = datetime.now()
     await handle_upload()
