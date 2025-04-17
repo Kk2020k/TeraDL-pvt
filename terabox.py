@@ -144,7 +144,7 @@ def format_size(size):
 
 def shorten_url(url):
     #You can change api_url with your choice shortener
-    api_url = "https://api.modijiurl.com/api"
+    api_url = ""
     params = {
         "api": SHORTENER_API,
         "url": url
