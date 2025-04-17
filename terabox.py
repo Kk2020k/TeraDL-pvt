@@ -155,9 +155,6 @@ async def start_command(client: Client, message: Message):
         token = message.command[1]
         user_id = message.from_user.id
 
-            else:
-                await message.reply_text(final_msg, reply_markup=reply_markup)
-
 async def update_status_message(status_message, text):
     try:
         await status_message.edit_text(text)
