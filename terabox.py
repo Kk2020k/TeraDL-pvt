@@ -154,6 +154,13 @@ async def start_command(client: Client, message: Message):
     if len(message.command) > 1 and len(message.command[1]) == 36:
         token = message.command[1]
         user_id = message.from_user.id
+        if os.path.exists(video_file_id):
+        await client.send_video(
+            chat_id=message.chat.id,
+            video=video_file_id,
+            caption=reply_message,
+            reply_markup=reply_markup
+        )
 
 async def update_status_message(status_message, text):
     try:
