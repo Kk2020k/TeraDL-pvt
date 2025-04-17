@@ -236,7 +236,7 @@ async def handle_message(client: Client, message: Message):
         f"✨ {download.name}\n"
         f"👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a>\n"
         f"📥 ᴜsᴇʀ ʟɪɴᴋ: tg://user?id={user_id}\n\n"
-        f"🤖 ᴡᴀᴛᴄʜ ᴀᴘɪ ʙᴏᴛ: @Teraboxdldbot
+        f"🤖 ᴡᴀᴛᴄʜ ᴀᴘɪ ʙᴏᴛ: @Teraboxdldbot"
         "[ᴘᴏᴡᴇʀᴇᴅ ʙʏ @ᴀᴍ_ꜰɪʟᴍꜱ](https://t.me/AM_FILMS)"
     )
 
