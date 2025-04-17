@@ -159,6 +159,10 @@ async def start_command(client: Client, message: Message):
             video=video_file_id,
             caption=reply_message,
             reply_markup=reply_markup
+        )
+    else:
+        await message.reply_text(reply_message, reply_markup=reply_markup)
+
 
 async def update_status_message(status_message, text):
     try:
