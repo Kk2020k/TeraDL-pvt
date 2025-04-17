@@ -176,13 +176,6 @@ async def handle_message(client: Client, message: Message):
         reply_markup = InlineKeyboardMarkup([[join_button]])
         await message.reply_text("ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴍʏ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜsᴇ ᴍᴇ.", reply_markup=reply_markup)
         return
-
-    if not has_valid_token(user_id):
-        await message.reply_text(
-            "Your token has expired or you haven't generated one yet.\n"
-            "Please generate a new token using /start."
-        )
-        return
     
     url = None
     for word in message.text.split():
