@@ -142,53 +142,6 @@ def format_size(size):
     else:
         return f"{size / (1024 * 1024 * 1024):.2f} GB"
 
-def shorten_url(url):
-    #You can change api_url with your choice shortener
-    api_url = "https://api.modijiurl.com/api"
-    params = {
-        "api": SHORTENER_API,
-        "url": url
-    }
-    try:
-        response = requests.get(api_url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        if data.get("status") == "success":
-            return data.get("shortenedUrl")
-        elif SHORTENER_API is None:
-            return url
-        else:
-            logger.error(f"Failed to shorten URL: {data}")
-            return url
-    except Exception as e:
-        logger.error(f"Error shortening URL: {e}")
-        return url
-
-def generate_uuid(user_id):
-    token = str(uuid.uuid4())
-    collection.update_one(
-        {"user_id": user_id},
-        {"$set": {"token": token, "token_status": "inactive", "token_expiry": None}},
-        upsert=True
-    )
-    return token
-
-def activate_token(user_id, token):
-    user_data = collection.find_one({"user_id": user_id, "token": token})
-    if user_data:
-        collection.update_one(
-            {"user_id": user_id, "token": token},
-            {"$set": {"token_status": "active", "token_expiry": datetime.now() + timedelta(hours=12)}}
-        )
-        return True
-    return False
-
-def has_valid_token(user_id):
-    user_data = collection.find_one({"user_id": user_id})
-    if user_data and user_data.get("token_status") == "active":
-        if datetime.now() < user_data.get("token_expiry"):
-            return True
-    return False
 
 @app.on_message(filters.command("start"))
 async def start_command(client: Client, message: Message):
@@ -202,57 +155,6 @@ async def start_command(client: Client, message: Message):
         token = message.command[1]
         user_id = message.from_user.id
 
-        if activate_token(user_id, token):
-            if os.path.exists(video_file_id):
-                await client.send_video(
-                    chat_id=message.chat.id,
-                    video=video_file_id,
-                    caption="🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nYour token has been activated successfully! You can now use the bot.",
-                    reply_markup=reply_markup
-                    )
-            else:
-                await message.reply_text("🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nYour token has been activated successfully! You can now use the bot.", reply_markup=reply_markup)
-        else:
-            if os.path.exists(video_file_id):
-                await client.send_video(
-                    chat_id=message.chat.id,
-                    video=video_file_id,
-                    caption="🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nInvalid token. Please generate a new one using /start.",
-                    reply_markup=reply_markup
-                    )
-            else:
-                await message.reply_text("🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nInvalid token. Please generate a new one using /start.", reply_markup=reply_markup)
-    else:
-        user_id = message.from_user.id
-        if not has_valid_token(user_id):
-            token = generate_uuid(user_id)
-            long_url = f"https://redirect.jet-mirror.in/{app.me.username}/{token}"
-            short_url = shorten_url(long_url)
-            if short_url:
-                reply_markup2 = InlineKeyboardMarkup([[InlineKeyboardButton("Generate Token Link", url=short_url)], [join_button, developer_button], [repo69]])
-                if os.path.exists(video_file_id):
-                    await client.send_video(
-                    chat_id=message.chat.id,
-                    video=video_file_id,
-                    caption="🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\nPlease generate your Token, which will be valid for 12Hrs.",
-                    reply_markup=reply_markup2
-                    )
-                else:
-                    await message.reply_text(
-                    "🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n\n"
-                    "Please generate your Token, which will be valid for 12Hrs.",
-                    reply_markup=reply_markup2
-                )
-            else:
-                await message.reply_text("Failed to generate the final link. Please try again.")
-        else:
-            if os.path.exists(video_file_id):
-                await client.send_video(
-                    chat_id=message.chat.id,
-                    video=video_file_id,
-                    caption=final_msg,
-                    reply_markup=reply_markup
-                    )
             else:
                 await message.reply_text(final_msg, reply_markup=reply_markup)
 
