@@ -277,7 +277,7 @@ async def handle_message(client: Client, message: Message):
     )
 
     last_update_time = time.time()
-    UPDATE_INTERVAL = 15
+    UPDATE_INTERVAL = 5
 
     async def update_status(message, text):
         nonlocal last_update_time
