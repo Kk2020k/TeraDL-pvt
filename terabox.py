@@ -122,7 +122,7 @@ VALID_DOMAINS = [
     'teraboxlink.com', 'terafileshare.com'
 ]
 last_update_time = 0
-ZERO_SPEED_TIMEOUT = 300  # 5 minutes in seconds
+ZERO_SPEED_TIMEOUT = 60  # 5 minutes in seconds
 
 async def is_user_member(client, user_id):
     try:
@@ -236,7 +236,7 @@ async def handle_message(client: Client, message: Message):
             elif time.time() - zero_speed_start > ZERO_SPEED_TIMEOUT:
                 await update_status_message(
                     status_message,
-                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 5 ᴍɪɴᴜᴛᴇꜱ",
+                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 1 ᴍɪɴᴜᴛᴇꜱ",
                     reply_markup=watch_markup
                 )
                 try:
@@ -304,7 +304,7 @@ async def handle_message(client: Client, message: Message):
             if elapsed_time.seconds > ZERO_SPEED_TIMEOUT:
                 await update_status_message(
                     status_message,
-                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 5 ᴍɪɴᴜᴛᴇꜱ",
+                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 1 ᴍɪɴᴜᴛᴇꜱ",
                     reply_markup=watch_markup
                 )
                 return True  # Indicate we should stop
