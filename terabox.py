@@ -6,7 +6,7 @@ import os
 import logging
 import math
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait
 from pymongo import MongoClient
@@ -115,9 +115,7 @@ VALID_DOMAINS = [
     'teraboxlink.com', 'terafileshare.com'
 ]
 last_update_time = 0
-
-# Dictionary to store active downloads and their status
-active_downloads = {}
+ZERO_SPEED_TIMEOUT = 300  # 5 minutes in seconds
 
 async def is_user_member(client, user_id):
     try:
@@ -150,9 +148,9 @@ async def start_command(client, message):
     await asyncio.sleep(2)
     await sticker_message.delete()
     user_mention = message.from_user.mention
-    reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
+    reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ �ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
     join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/AM_FILMS")
-    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ", url="https://t.me/AM_UPDATE1")
+    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ", url="https://t.me/Dramaship")
     reply_markup = InlineKeyboardMarkup([[join_button, developer_button]])
     video_file_id = "/app/Jet-Mirror.mp4"
     if os.path.exists(video_file_id):
@@ -171,29 +169,6 @@ async def update_status_message(status_message, text, reply_markup=None):
     except Exception as e:
         logger.error(f"Failed to update status message: {e}")
 
-@app.on_callback_query()
-async def handle_callback_query(client: Client, callback_query: CallbackQuery):
-    data = callback_query.data
-    user_id = callback_query.from_user.id
-    
-    if data.startswith("cancel_"):
-        gid = data.split("_")[1]
-        if gid in active_downloads:
-            download = active_downloads[gid]["download"]
-            try:
-                await aria2.client.force_pause(gid)
-                await aria2.client.force_remove(gid)
-                await callback_query.answer("Download cancelled!", show_alert=True)
-                status_message = active_downloads[gid]["status_message"]
-                await status_message.edit_text("❌ Download cancelled by user!")
-                if active_downloads[gid]["file_path"] and os.path.exists(active_downloads[gid]["file_path"]):
-                    os.remove(active_downloads[gid]["file_path"])
-                del active_downloads[gid]
-            except Exception as e:
-                await callback_query.answer(f"Failed to cancel download: {e}", show_alert=True)
-        else:
-            await callback_query.answer("Download not found or already completed!", show_alert=True)
-
 @app.on_message(filters.text)
 async def handle_message(client: Client, message: Message):
     if message.text.startswith('/'):
@@ -205,7 +180,7 @@ async def handle_message(client: Client, message: Message):
     is_member = await is_user_member(client, user_id)
 
     if not is_member:
-        join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/+FIWD86r0LiRlMzll")
+        join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/AM_UPLOAD1")
         reply_markup = InlineKeyboardMarkup([[join_button]])
         await message.reply_text("ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴍʏ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜsᴇ ᴍᴇ.", reply_markup=reply_markup)
         return
@@ -222,98 +197,84 @@ async def handle_message(client: Client, message: Message):
 
     encoded_url = urllib.parse.quote(url)
     final_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={encoded_url}"
+    watch_url = f"https://opabhik.serv00.net/Watch.php?url={encoded_url}"
+    watch_button = InlineKeyboardButton("ᴡᴀᴛᴄʜ ʟɪɴᴋ", url=watch_url)
+    watch_markup = InlineKeyboardMarkup([[watch_button]])
 
     download = aria2.add_uris([final_url])
-    
-    # Add cancel button to status message
-    cancel_button = InlineKeyboardButton("❌ Cancel Download", callback_data=f"cancel_{download.gid}")
-    reply_markup = InlineKeyboardMarkup([[cancel_button]])
-    
-    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤", reply_markup=reply_markup)
+    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤", reply_markup=watch_markup)
 
     start_time = datetime.now()
-    last_non_zero_speed_time = datetime.now()
-    zero_speed_duration = 0  # Track how long speed has been zero
-    
-    # Store download info for cancellation
-    active_downloads[download.gid] = {
-        "download": download,
-        "status_message": status_message,
-        "file_path": None,
-        "user_id": user_id
-    }
+    last_active_time = time.time()
+    zero_speed_start = None
 
     while not download.is_complete:
         await asyncio.sleep(15)
         download.update()
         progress = download.progress
 
-        elapsed_time = datetime.now() - start_time
-        elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
-        
-        # Check for stalled download (0B/s for 5 minutes)
+        # Check for zero speed condition
         current_speed = download.download_speed
         if current_speed == 0:
-            zero_speed_duration = (datetime.now() - last_non_zero_speed_time).total_seconds()
-            if zero_speed_duration >= 300:  # 5 minutes (300 seconds)
-                await aria2.client.force_pause(download.gid)
-                await aria2.client.force_remove(download.gid)
+            if zero_speed_start is None:
+                zero_speed_start = time.time()
+            elif time.time() - zero_speed_start > ZERO_SPEED_TIMEOUT:
                 await update_status_message(
-                    status_message, 
-                    "❌ Download automatically cancelled due to no progress for 5 minutes!",
-                    reply_markup=None
+                    status_message,
+                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 5 ᴍɪɴᴜᴛᴇꜱ",
+                    reply_markup=watch_markup
                 )
-                if download.gid in active_downloads:
-                    del active_downloads[download.gid]
+                try:
+                    download.remove()
+                except:
+                    pass
                 return
         else:
-            last_non_zero_speed_time = datetime.now()
-            zero_speed_duration = 0
+            zero_speed_start = None
+
+        elapsed_time = datetime.now() - start_time
+        elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
 
         status_text = (
             f"┏ ғɪʟᴇɴᴀᴍᴇ: {download.name}\n"
-            f"┠ [{'★' * int(progress / 10)}{'☆' * (10 - int(progress / 10))}] {progress:.2f}%\n"
-            f"┠ �ᴘʀᴏᴄᴇssᴇᴅ: {format_size(download.completed_length)} ᴏғ {format_size(download.total_length)}\n"
+            f"┠ [{'■' * int(progress / 10)}{'□' * (10 - int(progress / 10))}] {progress:.2f}%\n"
+            f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(download.completed_length)} ᴏғ {format_size(download.total_length)}\n"
             f"┠ sᴛᴀᴛᴜs: 📥 Downloading\n"
             f"┠ ᴇɴɢɪɴᴇ: <b><u>Aria2c v1.37.0</u></b>\n"
             f"┠ sᴘᴇᴇᴅ: {format_size(download.download_speed)}/s\n"
             f"┠ ᴇᴛᴀ: {download.eta} | ᴇʟᴀᴘsᴇᴅ: {elapsed_minutes}m {elapsed_seconds}s\n"
             f"┖ ᴜsᴇʀ: <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a> | ɪᴅ: {user_id}\n"
         )
-        
         while True:
             try:
-                await update_status_message(status_message, status_text, reply_markup)
+                await update_status_message(status_message, status_text, reply_markup=watch_markup)
                 break
             except FloodWait as e:
                 logger.error(f"Flood wait detected! Sleeping for {e.value} seconds")
                 await asyncio.sleep(e.value)
 
     file_path = download.files[0].path
-    active_downloads[download.gid]["file_path"] = file_path
-    
     caption = (
         f"✨ {download.name}\n"
         f"👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a>\n"
         f"📥 ᴜsᴇʀ ʟɪɴᴋ: tg://user?id={user_id}\n\n"
-        f"🤖 ᴡᴀᴛᴄʜ ᴀᴘɪ ʙᴏᴛ: @Teraboxdldbot"
         "[ᴘᴏᴡᴇʀᴇᴅ ʙʏ @ᴀᴍ_ꜰɪʟᴍꜱ](https://t.me/AM_FILMS)"
     )
 
     last_update_time = time.time()
     UPDATE_INTERVAL = 15
 
-    async def update_status(message, text, reply_markup=None):
+    async def update_status(message, text):
         nonlocal last_update_time
         current_time = time.time()
         if current_time - last_update_time >= UPDATE_INTERVAL:
             try:
-                await message.edit_text(text, reply_markup=reply_markup)
+                await message.edit_text(text, reply_markup=watch_markup)
                 last_update_time = current_time
             except FloodWait as e:
                 logger.warning(f"FloodWait: Sleeping for {e.value}s")
                 await asyncio.sleep(e.value)
-                await update_status(message, text, reply_markup)
+                await update_status(message, text)
             except Exception as e:
                 logger.error(f"Error updating status: {e}")
 
@@ -322,13 +283,25 @@ async def handle_message(client: Client, message: Message):
         elapsed_time = datetime.now() - start_time
         elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
 
+        # Check for zero upload speed
+        current_speed = current / elapsed_time.seconds if elapsed_time.seconds > 0 else 0
+        if current_speed == 0:
+            if elapsed_time.seconds > ZERO_SPEED_TIMEOUT:
+                await update_status_message(
+                    status_message,
+                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 5 ᴍɪɴᴜᴛᴇꜱ",
+                    reply_markup=watch_markup
+                )
+                return True  # Indicate we should stop
+        return False  # Continue upload
+
         status_text = (
             f"┏ ғɪʟᴇɴᴀᴍᴇ: {download.name}\n"
             f"┠ [{'■' * int(progress / 10)}{'□' * (10 - int(progress / 10))}] {progress:.2f}%\n"
             f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(current)} ᴏғ {format_size(total)}\n"
             f"┠ sᴛᴀᴛᴜs: 📤 Uploading to Telegram\n"
             f"┠ ᴇɴɢɪɴᴇ: <b><u>PyroFork v2.2.11</u></b>\n"
-            f"┠ sᴘᴇᴇᴅ: {format_size(current / elapsed_time.seconds if elapsed_time.seconds > 0 else 0)}/s\n"
+            f"┠ sᴘᴇᴇᴅ: {format_size(current_speed)}/s\n"
             f"┠ ᴇʟᴀᴘsᴇᴅ: {elapsed_minutes}m {elapsed_seconds}s\n"
             f"┖ ᴜsᴇʀ: <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a> | ɪᴅ: {user_id}\n"
         )
@@ -394,7 +367,8 @@ async def handle_message(client: Client, message: Message):
         if file_size > SPLIT_SIZE:
             await update_status(
                 status_message,
-                f"✂️ Splitting {download.name} ({format_size(file_size)})"
+                f"✂️ Splitting {download.name} ({format_size(file_size)})",
+                reply_markup=watch_markup
             )
             
             split_files = await split_video_with_ffmpeg(
@@ -409,27 +383,32 @@ async def handle_message(client: Client, message: Message):
                     await update_status(
                         status_message,
                         f"📤 Uploading part {i+1}/{len(split_files)}\n"
-                        f"{os.path.basename(part)}"
+                        f"{os.path.basename(part)}",
+                        reply_markup=watch_markup
                     )
                     
                     if USER_SESSION_STRING:
                         sent = await user.send_video(
                             DUMP_CHAT_ID, part, 
                             caption=part_caption,
-                            progress=upload_progress
+                            progress=upload_progress,
+                            reply_markup=watch_markup
                         )
                         await app.copy_message(
-                            message.chat.id, DUMP_CHAT_ID, sent.id
+                            message.chat.id, DUMP_CHAT_ID, sent.id,
+                            reply_markup=watch_markup
                         )
                     else:
                         sent = await client.send_video(
                             DUMP_CHAT_ID, part,
                             caption=part_caption,
-                            progress=upload_progress
+                            progress=upload_progress,
+                            reply_markup=watch_markup
                         )
                         await client.send_video(
                             message.chat.id, sent.video.file_id,
-                            caption=part_caption
+                            caption=part_caption,
+                            reply_markup=watch_markup
                         )
                     os.remove(part)
             finally:
@@ -440,34 +419,35 @@ async def handle_message(client: Client, message: Message):
             await update_status(
                 status_message,
                 f"📤 Uploading {download.name}\n"
-                f"Size: {format_size(file_size)}"
+                f"Size: {format_size(file_size)}",
+                reply_markup=watch_markup
             )
             
             if USER_SESSION_STRING:
                 sent = await user.send_video(
                     DUMP_CHAT_ID, file_path,
                     caption=caption,
-                    progress=upload_progress
+                    progress=upload_progress,
+                    reply_markup=watch_markup
                 )
                 await app.copy_message(
-                    message.chat.id, DUMP_CHAT_ID, sent.id
+                    message.chat.id, DUMP_CHAT_ID, sent.id,
+                    reply_markup=watch_markup
                 )
             else:
                 sent = await client.send_video(
                     DUMP_CHAT_ID, file_path,
                     caption=caption,
-                    progress=upload_progress
+                    progress=upload_progress,
+                    reply_markup=watch_markup
                 )
                 await client.send_video(
                     message.chat.id, sent.video.file_id,
-                    caption=caption
+                    caption=caption,
+                    reply_markup=watch_markup
                 )
         if os.path.exists(file_path):
             os.remove(file_path)
-        
-        # Remove from active downloads after completion
-        if download.gid in active_downloads:
-            del active_downloads[download.gid]
 
     start_time = datetime.now()
     await handle_upload()
