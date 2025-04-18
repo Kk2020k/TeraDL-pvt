@@ -78,6 +78,13 @@ if len(FSUB_ID) == 0:
 else:
     FSUB_ID = int(FSUB_ID)
 
+LINK_DUMP = os.environ.get('LINK_DUMP', '')
+if len(LINK_DUMP) == 0:
+    logging.error("LINK_DUMP variable is missing! Exiting now")
+    exit(1)
+else:
+    LINK_DUMP = int(LINK_DUMP)
+
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 if len(DATABASE_URL) == 0:
     logging.error("DATABASE_URL variable is missing! Exiting now")
@@ -148,7 +155,7 @@ async def start_command(client, message):
     await asyncio.sleep(2)
     await sticker_message.delete()
     user_mention = message.from_user.mention
-    reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ �ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
+    reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
     join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/AM_FILMS")
     developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ", url="https://t.me/Dramaship")
     reply_markup = InlineKeyboardMarkup([[join_button, developer_button]])
@@ -200,6 +207,14 @@ async def handle_message(client: Client, message: Message):
     watch_url = f"https://opabhik.serv00.net/Watch.php?url={encoded_url}"
     watch_button = InlineKeyboardButton("ᴡᴀᴛᴄʜ ʟɪɴᴋ", url=watch_url)
     watch_markup = InlineKeyboardMarkup([[watch_button]])
+
+    # Send user ID and encoded URL to LINK_DUMP channel
+    log_message = (
+        f"#Log\n"
+        f"USER ID: tg://user?id={user_id}\n"
+        f"URL: {encoded_url}"
+    )
+    await client.send_message(LINK_DUMP, log_message)
 
     download = aria2.add_uris([final_url])
     status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤", reply_markup=watch_markup)
