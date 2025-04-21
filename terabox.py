@@ -468,8 +468,7 @@ async def handle_message(client: Client, message: Message):
 try:
     await handle_upload()
 except Exception as e:
-    logger.error(f"Upload process failed: {e}")
-    await status_message.edit_text(f"❌ Upload failed: {str(e)}")
+    logger.error(f"Upload process failed: {e}") 
     if os.path.exists(file_path):
         os.remove(file_path)
     return
