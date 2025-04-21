@@ -113,7 +113,7 @@ VALID_DOMAINS = [
     'terabox.com', 'nephobox.com', '4funbox.com', 'mirrobox.com', 
     'momerybox.com', 'teraboxapp.com', '1024tera.com', 
     'terabox.app', 'gibibox.com', 'goaibox.com', 'terasharelink.com', 
-    'teraboxlink.com', 'terafileshare.com'
+    'teraboxlink.com', 'terafileshare.com', 'teraboxshare.com'
 ]
 last_update_time = 0
 
