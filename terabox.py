@@ -78,13 +78,6 @@ if len(FSUB_ID) == 0:
 else:
     FSUB_ID = int(FSUB_ID)
 
-LINK_DUMP = os.environ.get('LINK_DUMP', '')
-if len(LINK_DUMP) == 0:
-    logging.error("LINK_DUMP variable is missing! Exiting now")
-    exit(1)
-else:
-    LINK_DUMP = int(LINK_DUMP)
-
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 if len(DATABASE_URL) == 0:
     logging.error("DATABASE_URL variable is missing! Exiting now")
@@ -94,6 +87,7 @@ SHORTENER_API = os.environ.get('SHORTENER_API', '')
 if len(SHORTENER_API) == 0:
     logging.info("SHORTENER_API variable is missing!")
     SHORTENER_API = None
+
 
 USER_SESSION_STRING = os.environ.get('USER_SESSION_STRING', '')
 if len(USER_SESSION_STRING) == 0:
@@ -122,7 +116,6 @@ VALID_DOMAINS = [
     'teraboxlink.com', 'terafileshare.com'
 ]
 last_update_time = 0
-ZERO_SPEED_TIMEOUT = 60  # 5 minutes in seconds
 
 async def is_user_member(client, user_id):
     try:
@@ -151,13 +144,13 @@ def format_size(size):
 
 @app.on_message(filters.command("start"))
 async def start_command(client, message):
-    sticker_message = await message.reply_sticker("CAACAgUAAxkBAAEOUi5oAR8WrkDyvJ3ZtbtKHU_3wz-dEwACjxAAAshNmVYFPD4yDH_fnjYE")
+    sticker_message = await message.reply_sticker("CAACAgIAAxkBAAEYonplzwrczhVu3I6HqPBzro3L2JU6YAACvAUAAj-VzAoTSKpoG9FPRjQE")
     await asyncio.sleep(2)
     await sticker_message.delete()
     user_mention = message.from_user.mention
     reply_message = f"ᴡᴇʟᴄᴏᴍᴇ, {user_mention}.\n\n🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ. sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨."
-    join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/AM_FILMS")
-    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ", url="https://t.me/Dramaship")
+    join_button = InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url="https://t.me/jetmirror")
+    developer_button = InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="https://t.me/hrishikesh2861")
     reply_markup = InlineKeyboardMarkup([[join_button, developer_button]])
     video_file_id = "/app/Jet-Mirror.mp4"
     if os.path.exists(video_file_id):
@@ -170,9 +163,11 @@ async def start_command(client, message):
     else:
         await message.reply_text(reply_message, reply_markup=reply_markup)
 
-async def update_status_message(status_message, text, reply_markup=None):
+
+
+async def update_status_message(status_message, text):
     try:
-        await status_message.edit_text(text, reply_markup=reply_markup)
+        await status_message.edit_text(text)
     except Exception as e:
         logger.error(f"Failed to update status message: {e}")
 
@@ -187,7 +182,7 @@ async def handle_message(client: Client, message: Message):
     is_member = await is_user_member(client, user_id)
 
     if not is_member:
-        join_button = InlineKeyboardButton("ᴊᴏɪɴ", url="https://t.me/AM_UPLOAD1")
+        join_button = InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url="https://t.me/jetmirror")
         reply_markup = InlineKeyboardMarkup([[join_button]])
         await message.reply_text("ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴍʏ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜsᴇ ᴍᴇ.", reply_markup=reply_markup)
         return
@@ -204,65 +199,33 @@ async def handle_message(client: Client, message: Message):
 
     encoded_url = urllib.parse.quote(url)
     final_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={encoded_url}"
-    watch_url = f"https://opabhik.serv00.net/Watch.php?url={encoded_url}"
-    watch_button = InlineKeyboardButton("ᴡᴀᴛᴄʜ ʟɪɴᴋ", url=watch_url)
-    watch_markup = InlineKeyboardMarkup([[watch_button]])
-
-    # Send user ID and encoded URL to LINK_DUMP channel
-    log_message = (
-        f"#Log\n"
-        f"USER ID: tg://user?id={user_id}\n"
-        f"URL: {encoded_url}"
-    )
-    await client.send_message(LINK_DUMP, log_message)
 
     download = aria2.add_uris([final_url])
-    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤", reply_markup=watch_markup)
+    status_message = await message.reply_text("sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤")
 
     start_time = datetime.now()
-    last_active_time = time.time()
-    zero_speed_start = None
 
     while not download.is_complete:
         await asyncio.sleep(15)
         download.update()
         progress = download.progress
 
-        # Check for zero speed condition
-        current_speed = download.download_speed
-        if current_speed == 0:
-            if zero_speed_start is None:
-                zero_speed_start = time.time()
-            elif time.time() - zero_speed_start > ZERO_SPEED_TIMEOUT:
-                await update_status_message(
-                    status_message,
-                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 1 ᴍɪɴᴜᴛᴇꜱ",
-                    reply_markup=watch_markup
-                )
-                try:
-                    download.remove()
-                except:
-                    pass
-                return
-        else:
-            zero_speed_start = None
-
         elapsed_time = datetime.now() - start_time
         elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
 
         status_text = (
             f"┏ ғɪʟᴇɴᴀᴍᴇ: {download.name}\n"
-            f"┠ [{'■' * int(progress / 10)}{'□' * (10 - int(progress / 10))}] {progress:.2f}%\n"
+            f"┠ [{'★' * int(progress / 10)}{'☆' * (10 - int(progress / 10))}] {progress:.2f}%\n"
             f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(download.completed_length)} ᴏғ {format_size(download.total_length)}\n"
             f"┠ sᴛᴀᴛᴜs: 📥 Downloading\n"
             f"┠ ᴇɴɢɪɴᴇ: <b><u>Aria2c v1.37.0</u></b>\n"
             f"┠ sᴘᴇᴇᴅ: {format_size(download.download_speed)}/s\n"
             f"┠ ᴇᴛᴀ: {download.eta} | ᴇʟᴀᴘsᴇᴅ: {elapsed_minutes}m {elapsed_seconds}s\n"
             f"┖ ᴜsᴇʀ: <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a> | ɪᴅ: {user_id}\n"
-        )
+            )
         while True:
             try:
-                await update_status_message(status_message, status_text, reply_markup=watch_markup)
+                await update_status_message(status_message, status_text)
                 break
             except FloodWait as e:
                 logger.error(f"Flood wait detected! Sleeping for {e.value} seconds")
@@ -273,18 +236,18 @@ async def handle_message(client: Client, message: Message):
         f"✨ {download.name}\n"
         f"👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a>\n"
         f"📥 ᴜsᴇʀ ʟɪɴᴋ: tg://user?id={user_id}\n\n"
-        "[ᴘᴏᴡᴇʀᴇᴅ ʙʏ @ᴀᴍ_ꜰɪʟᴍꜱ](https://t.me/AM_FILMS)"
+        "[ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴊᴇᴛ-ᴍɪʀʀᴏʀ ❤️🚀](https://t.me/JetMirror)"
     )
 
     last_update_time = time.time()
-    UPDATE_INTERVAL = 5
+    UPDATE_INTERVAL = 15
 
     async def update_status(message, text):
         nonlocal last_update_time
         current_time = time.time()
         if current_time - last_update_time >= UPDATE_INTERVAL:
             try:
-                await message.edit_text(text, reply_markup=watch_markup)
+                await message.edit_text(text)
                 last_update_time = current_time
             except FloodWait as e:
                 logger.warning(f"FloodWait: Sleeping for {e.value}s")
@@ -298,25 +261,13 @@ async def handle_message(client: Client, message: Message):
         elapsed_time = datetime.now() - start_time
         elapsed_minutes, elapsed_seconds = divmod(elapsed_time.seconds, 60)
 
-        # Check for zero upload speed
-        current_speed = current / elapsed_time.seconds if elapsed_time.seconds > 0 else 0
-        if current_speed == 0:
-            if elapsed_time.seconds > ZERO_SPEED_TIMEOUT:
-                await update_status_message(
-                    status_message,
-                    "❌ ᴛᴀꜱᴋ ꜱᴛᴏᴘᴘᴇᴅ ʙʏ ʙᴏᴛ: ɴᴏ ᴅᴏᴡɴʟᴏᴀᴅ ᴘʀᴏɢʀᴇꜱꜱ ꜰᴏʀ 1 ᴍɪɴᴜᴛᴇꜱ",
-                    reply_markup=watch_markup
-                )
-                return True  # Indicate we should stop
-        return False  # Continue upload
-
         status_text = (
             f"┏ ғɪʟᴇɴᴀᴍᴇ: {download.name}\n"
-            f"┠ [{'■' * int(progress / 10)}{'□' * (10 - int(progress / 10))}] {progress:.2f}%\n"
+            f"┠ [{'★' * int(progress / 10)}{'☆' * (10 - int(progress / 10))}] {progress:.2f}%\n"
             f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(current)} ᴏғ {format_size(total)}\n"
             f"┠ sᴛᴀᴛᴜs: 📤 Uploading to Telegram\n"
             f"┠ ᴇɴɢɪɴᴇ: <b><u>PyroFork v2.2.11</u></b>\n"
-            f"┠ sᴘᴇᴇᴅ: {format_size(current_speed)}/s\n"
+            f"┠ sᴘᴇᴇᴅ: {format_size(current / elapsed_time.seconds if elapsed_time.seconds > 0 else 0)}/s\n"
             f"┠ ᴇʟᴀᴘsᴇᴅ: {elapsed_minutes}m {elapsed_seconds}s\n"
             f"┖ ᴜsᴇʀ: <a href='tg://user?id={user_id}'>{message.from_user.first_name}</a> | ɪᴅ: {user_id}\n"
         )
@@ -382,8 +333,7 @@ async def handle_message(client: Client, message: Message):
         if file_size > SPLIT_SIZE:
             await update_status(
                 status_message,
-                f"✂️ Splitting {download.name} ({format_size(file_size)})",
-                reply_markup=watch_markup
+                f"✂️ Splitting {download.name} ({format_size(file_size)})"
             )
             
             split_files = await split_video_with_ffmpeg(
@@ -398,32 +348,27 @@ async def handle_message(client: Client, message: Message):
                     await update_status(
                         status_message,
                         f"📤 Uploading part {i+1}/{len(split_files)}\n"
-                        f"{os.path.basename(part)}",
-                        reply_markup=watch_markup
+                        f"{os.path.basename(part)}"
                     )
                     
                     if USER_SESSION_STRING:
                         sent = await user.send_video(
                             DUMP_CHAT_ID, part, 
                             caption=part_caption,
-                            progress=upload_progress,
-                            reply_markup=watch_markup
+                            progress=upload_progress
                         )
                         await app.copy_message(
-                            message.chat.id, DUMP_CHAT_ID, sent.id,
-                            reply_markup=watch_markup
+                            message.chat.id, DUMP_CHAT_ID, sent.id
                         )
                     else:
                         sent = await client.send_video(
                             DUMP_CHAT_ID, part,
                             caption=part_caption,
-                            progress=upload_progress,
-                            reply_markup=watch_markup
+                            progress=upload_progress
                         )
                         await client.send_video(
                             message.chat.id, sent.video.file_id,
-                            caption=part_caption,
-                            reply_markup=watch_markup
+                            caption=part_caption
                         )
                     os.remove(part)
             finally:
@@ -432,34 +377,29 @@ async def handle_message(client: Client, message: Message):
                     except: pass
         else:
             await update_status(
-    status_message,
-    f"📤 Uploading {download.name}\n"
-    f"Size: {format_size(file_size)}",
-    reply_markup=watch_markup
+                status_message,
+                f"📤 Uploading {download.name}\n"
+                f"Size: {format_size(file_size)}"
             )
             
             if USER_SESSION_STRING:
                 sent = await user.send_video(
                     DUMP_CHAT_ID, file_path,
                     caption=caption,
-                    progress=upload_progress,
-                    reply_markup=watch_markup
+                    progress=upload_progress
                 )
                 await app.copy_message(
-                    message.chat.id, DUMP_CHAT_ID, sent.id,
-                    reply_markup=watch_markup
+                    message.chat.id, DUMP_CHAT_ID, sent.id
                 )
             else:
                 sent = await client.send_video(
                     DUMP_CHAT_ID, file_path,
                     caption=caption,
-                    progress=upload_progress,
-                    reply_markup=watch_markup
+                    progress=upload_progress
                 )
                 await client.send_video(
                     message.chat.id, sent.video.file_id,
-                    caption=caption,
-                    reply_markup=watch_markup
+                    caption=caption
                 )
         if os.path.exists(file_path):
             os.remove(file_path)
