@@ -465,13 +465,14 @@ async def handle_message(client: Client, message: Message):
             os.remove(file_path)
 
     start_time = datetime.now()
+try:
     await handle_upload()
-
-    try:
-        await status_message.delete()
-        await message.delete()
-    except Exception as e:
-        logger.error(f"Cleanup error: {e}")
+except Exception as e:
+    logger.error(f"Upload process failed: {e}")
+    await status_message.edit_text(f"❌ Upload failed: {str(e)}")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    return
 
 flask_app = Flask(__name__)
 
