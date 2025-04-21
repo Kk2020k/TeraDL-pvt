@@ -432,10 +432,10 @@ async def handle_message(client: Client, message: Message):
                     except: pass
         else:
             await update_status(
-                status_message,
-                f"📤 Uploading {download.name}\n"
-                f"Size: {format_size(file_size)}",
-                reply_markup=watch_markup
+    status_message,
+    f"📤 Uploading {download.name}\n"
+    f"Size: {format_size(file_size)}",
+    reply_markup=watch_markup
             )
             
             if USER_SESSION_STRING:
