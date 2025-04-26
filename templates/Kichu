@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe vs AI</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(180deg, #1a1a1a, #000);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            transition: all 0.5s;
+        }
+        body.ai-win {
+            background: linear-gradient(180deg, #300000, #000);
+            color: #f00;
+        }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #warning-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 3px solid #0f0;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 30px #0f0;
+            position: relative;
+            z-index: 1002;
+            max-width: 80%;
+        }
+        #loading-text {
+            font-size: 32px;
+            color: #0f0;
+            text-shadow: 0 0 15px #0f0, 0 0 30px #0f0;
+            text-align: center;
+            line-height: 1.5;
+            font-weight: bold;
+            margin: 0;
+        }
+        #game-container {
+            text-align: center;
+            display: none;
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px #0f0, 0 0 40px #0f0;
+            transition: all 0.5s;
+        }
+        .ai-win #game-container {
+            box-shadow: 0 0 20px #f00, 0 0 40px #f00;
+            border-color: #f00;
+        }
+        #game-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.2;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 130px);
+            grid-gap: 10px;
+            margin: 30px auto;
+            background: transparent;
+            padding: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .cell {
+            width: 130px;
+            height: 130px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 4px solid #0f0;
+            box-shadow: 0 0 20px #0f0, 0 0 40px #0f0 inset;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 70px;
+            cursor: pointer;
+            user-select: none;
+            color: #fff;
+            transition: transform 0.2s, background 0.2s, border-color 0.5s, box-shadow 0.5s;
+        }
+        .ai-win .cell {
+            border-color: #f00;
+            box-shadow: 0 0 20px #f00, 0 0 40px #f00 inset;
+        }
+        .cell.x {
+            color: #ff0000;
+            text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000;
+        }
+        .cell.o {
+            color: #ff00ff;
+            text-shadow: 0 0 15px #ff00ff, 0 0 30px #ff00ff;
+        }
+        .cell:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.05);
+        }
+        .ai-win .cell:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+        #status {
+            font-size: 32px;
+            color: #0f0;
+            text-shadow: 0 0 15px #0f0;
+            margin: 20px 0;
+            min-height: 40px;
+            transition: all 0.5s;
+        }
+        .ai-win #status {
+            color: #f00;
+            text-shadow: 0 0 15px #f00;
+        }
+        #score {
+            font-size: 24px;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.5s;
+        }
+        .ai-win #score {
+            color: #f00;
+            text-shadow: 0 0 10px #f00;
+        }
+        #reset {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #0f0;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 0 15px #0f0;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .ai-win #reset {
+            background: #f00;
+            box-shadow: 0 0 15px #f00;
+        }
+        #reset:hover {
+            transform: scale(1.1);
+        }
+        @keyframes winnerFlash {
+            0% { color: #0f0; text-shadow: 0 0 15px #0f0; }
+            50% { color: #ff0000; text-shadow: 0 0 30px #ff0000; }
+            100% { color: #0f0; text-shadow: 0 0 15px #0f0; }
+        }
+        .winner-animation {
+            animation: winnerFlash 0.5s infinite;
+        }
+        #ai-takeover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #f00;
+            font-size: 24px;
+            text-align: center;
+        }
+        #red-matrix {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        #takeover-message {
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #f00;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <canvas id="matrix-canvas"></canvas>
+        <div id="warning-box">
+            <p id="loading-text"></p>
+        </div>
+    </div>
+    
+    <div id="ai-takeover">
+        <canvas id="red-matrix"></canvas>
+        <div id="takeover-message"></div>
+    </div>
+    
+    <div id="game-container">
+        <canvas id="game-background"></canvas>
+        <div id="score">Player: 0 | AI: 0</div>
+        <div id="board"></div>
+        <div id="status">Your turn (X)</div>
+        <button id="reset">Reset Game</button>
+    </div>
+    <script>
+        // Typing Effect for Warning Message
+        const warningMessage = "WARNING: OPPONENT IS EXTREMELY DANGEROUS. BE READY. NO ONE IS RESPONSIBLE FOR YOUR LOSS.";
+        let i = 0;
+        function typeWarning() {
+            if (i < warningMessage.length) {
+                document.getElementById('loading-text').textContent += warningMessage.charAt(i);
+                i++;
+                setTimeout(typeWarning, 50);
+            }
+        }
+
+        // Matrix Animation for Loading Screen (excluding warning box area)
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+            
+            const warningBox = document.getElementById('warning-box');
+            const boxRect = warningBox.getBoundingClientRect();
+            
+            drops.forEach((y, i) => {
+                const x = i * fontSize;
+                // Skip drawing inside the warning box area
+                if (x >= boxRect.left && x <= boxRect.right && 
+                    y * fontSize >= boxRect.top && y * fontSize <= boxRect.bottom) {
+                    return;
+                }
+                
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, x, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+
+        const matrixInterval = setInterval(drawMatrix, 33);
+        typeWarning();
+        setTimeout(() => {
+            clearInterval(matrixInterval);
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+        }, 5000);
+
+        // Red Matrix Animation for AI Takeover
+        const redCanvas = document.getElementById('red-matrix');
+        const redCtx = redCanvas.getContext('2d');
+        redCanvas.height = window.innerHeight;
+        redCanvas.width = window.innerWidth;
+        const redDrops = Array(Math.floor(columns)).fill(1);
+
+        function drawRedMatrix() {
+            redCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            redCtx.fillRect(0, 0, redCanvas.width, redCanvas.height);
+            redCtx.fillStyle = '#f00';
+            redCtx.font = fontSize + 'px monospace';
+            
+            redDrops.forEach((y, i) => {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                const x = i * fontSize;
+                redCtx.fillText(text, x, y * fontSize);
+                if (y * fontSize > redCanvas.height && Math.random() > 0.975) redDrops[i] = 0;
+                redDrops[i]++;
+            });
+        }
+
+        // Matrix Animation for Game Background
+        const bgCanvas = document.getElementById('game-background');
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCanvas.height = window.innerHeight;
+        bgCanvas.width = window.innerWidth;
+        const bgDrops = Array(Math.floor(columns)).fill(1);
+
+        function drawGameBackground() {
+            bgCtx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+            bgCtx.font = fontSize + 'px monospace';
+            bgDrops.forEach((y, i) => {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                const x = i * fontSize;
+                bgCtx.fillText(text, x, y * fontSize);
+                if (y * fontSize > bgCanvas.height && Math.random() > 0.99) bgDrops[i] = 0;
+                bgDrops[i]++;
+            });
+        }
+
+        setInterval(drawGameBackground, 50);
+
+        // Tic Tac Toe Game
+        const board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let playerScore = 0;
+        let aiScore = 0;
+        const cells = [];
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function createBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            board.forEach((_, i) => {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleCellClick(i));
+                boardElement.appendChild(cell);
+                cells[i] = cell;
+            });
+        }
+
+        function handleCellClick(index) {
+            if (board[index] !== '' || !gameActive || currentPlayer !== 'X') return;
+            makeMove(index, 'X');
+            if (gameActive) setTimeout(() => aiMove(), 500);
+        }
+
+        function makeMove(index, player) {
+            board[index] = player;
+            cells[index].textContent = player;
+            cells[index].classList.add(player.toLowerCase());
+            if (checkWin(player)) {
+                document.getElementById('status').textContent = `${player} wins!`;
+                document.getElementById('status').classList.add('winner-animation');
+                gameActive = false;
+                updateScore(player);
+                
+                if (player === 'O') {
+                    aiTakeover();
+                }
+                return;
+            }
+            if (board.every(cell => cell !== '')) {
+                document.getElementById('status').textContent = "It's a tie!";
+                document.getElementById('status').classList.add('winner-animation');
+                gameActive = false;
+                return;
+            }
+            currentPlayer = player === 'X' ? 'O' : 'X';
+            document.getElementById('status').textContent = `Your turn (${currentPlayer})`;
+            document.getElementById('status').classList.remove('winner-animation');
+        }
+
+        function aiTakeover() {
+            document.body.classList.add('ai-win');
+            document.getElementById('ai-takeover').style.display = 'flex';
+            const redMatrixInterval = setInterval(drawRedMatrix, 33);
+            
+            const messages = [
+                "ACCESSING ROOT...",
+                "DECRYPTING BOOT SECTOR...",
+                "INJECTING MALWARE...",
+                "OVERRIDING SECURITY...",
+                "SYSTEM COMPROMISED...",
+                "PREPARING NEW GAME..."
+            ];
+            
+            let currentMessage = 0;
+            const takeoverMessage = document.getElementById('takeover-message');
+            
+            function showNextMessage() {
+                if (currentMessage < messages.length) {
+                    takeoverMessage.textContent = messages[currentMessage];
+                    currentMessage++;
+                    setTimeout(showNextMessage, 1500);
+                } else {
+                    clearInterval(redMatrixInterval);
+                    resetAfterTakeover();
+                }
+            }
+            
+            showNextMessage();
+        }
+        
+        function resetAfterTakeover() {
+            setTimeout(() => {
+                document.body.classList.remove('ai-win');
+                document.getElementById('ai-takeover').style.display = 'none';
+                resetGame();
+            }, 2000);
+        }
+
+        function checkWin(player) {
+            return winningCombinations.some(combo => {
+                return combo.every(index => board[index] === player);
+            });
+        }
+
+        function updateScore(winner) {
+            if (winner === 'X') playerScore++;
+            else if (winner === 'O') aiScore++;
+            document.getElementById('score').textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+        }
+
+        function resetGame() {
+            board.fill('');
+            currentPlayer = 'X';
+            gameActive = true;
+            document.getElementById('status').textContent = 'Your turn (X)';
+            document.getElementById('status').classList.remove('winner-animation');
+            createBoard();
+        }
+
+        function aiMove() {
+            const bestMove = minimax(board, 'O', 0, -Infinity, Infinity).index;
+            makeMove(bestMove, 'O');
+        }
+
+        function minimax(newBoard, player, depth, alpha, beta) {
+            const availSpots = newBoard.map((val, i) => val === '' ? i : null).filter(val => val !== null);
+
+            if (checkWin('X')) return { score: -10 + depth };
+            if (checkWin('O')) return { score: 10 - depth };
+            if (availSpots.length === 0) return { score: 0 };
+
+            const moves = [];
+            for (let i of availSpots) {
+                const move = {};
+                move.index = i;
+                newBoard[i] = player;
+                if (player === 'O') {
+                    move.score = minimax(newBoard, 'X', depth + 1, alpha, beta).score;
+                    alpha = Math.max(alpha, move.score);
+                } else {
+                    move.score = minimax(newBoard, 'O', depth + 1, alpha, beta).score;
+                    beta = Math.min(beta, move.score);
+                }
+                newBoard[i] = '';
+                moves.push(move);
+                if (alpha >= beta) break;
+            }
+
+            let bestMove;
+            if (player === 'O') {
+                let bestScore = -Infinity;
+                for (let move of moves) {
+                    if (move.score > bestScore) {
+                        bestScore = move.score;
+                        bestMove = move;
+                    }
+                }
+            } else {
+                let bestScore = Infinity;
+                for (let move of moves) {
+                    if (move.score < bestScore) {
+                        bestScore = move.score;
+                        bestMove = move;
+                    }
+                }
+            }
+            return bestMove;
+        }
+
+        document.getElementById('reset').addEventListener('click', resetGame);
+        createBoard();
+    </script>
+</body>
+</html>
