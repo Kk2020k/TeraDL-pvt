@@ -1,173 +1,449 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Love-Web</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: #000000;
-      overflow: hidden;
-      font-family: 'Arial', sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - AMOLED (vs AI)</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
 
-    .title {
-      font-size: 3rem;
-      color: #ff0000;
-      text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000;
-      margin-bottom: 20px;
-      animation: glow 1.5s ease-in-out infinite alternate;
-    }
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
 
-    .heart-container {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .heart {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: #ff0000;
-      clip-path: path('M100 20 C130 0, 180 0, 200 40 C220 80, 200 120, 180 140 C160 160, 120 180, 100 200 C80 180, 40 160, 20 140 C0 120, -20 80, 0 40 C20 0, 70 0, 100 20 Z');
-      animation: beat 1.2s ease-in-out infinite, glow 1.5s ease-in-out infinite alternate;
-      box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000;
-    }
+        .status {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            height: 30px;
+        }
 
-    .sparkles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+        }
 
-    .sparkle {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #ffffff;
-      border-radius: 50%;
-      opacity: 0;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-      animation: sparkle 1.2s infinite;
-    }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #000000;
+            border: 2px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-    @keyframes beat {
-      0%, 100% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.1);
-      }
-    }
+        .cell:hover {
+            background-color: #111111;
+        }
 
-    @keyframes glow {
-      from {
-        text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000;
-      }
-      to {
-        text-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000;
-      }
-    }
+        .reset-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-    @keyframes sparkle {
-      0% { opacity: 0; transform: scale(0); }
-      50% { opacity: 1; transform: scale(1.5); }
-      100% { opacity: 0; transform: scale(0); }
-    }
+        .reset-btn:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
 
-    .custom-audio {
-      margin-top: 80px;
-      width: 320px;
-      background: #111;
-      border-radius: 12px;
-      padding: 15px;
-      box-shadow: 0 0 15px #ff0000;
-      filter: drop-shadow(0 0 5px #ff0000);
-      color: white;
-      text-align: center;
-    }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffffff;
+            opacity: 0;
+            z-index: 10;
+            animation: confetti-fall 3s ease-in-out forwards;
+        }
 
-    .custom-audio select {
-      width: 100%;
-      padding: 8px;
-      background: #000;
-      color: #fff;
-      border: 1px solid #ff0000;
-      border-radius: 5px;
-      margin-bottom: 10px;
-    }
-  </style>
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .winner-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            z-index: 20;
+            animation: winner-popup 2s ease-in-out forwards;
+        }
+
+        @keyframes winner-popup {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .difficulty {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .difficulty-btn {
+            padding: 8px 15px;
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .difficulty-btn.active {
+            background-color: #ffffff;
+            color: #000000;
+        }
+    </style>
 </head>
 <body>
-  <div class="title">love-web</div>
+    <div class="game-container">
+        <h1>Tic Tac Toe vs AI</h1>
+        <div class="difficulty">
+            <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+            <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+            <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        </div>
+        <div class="status" id="status">Your turn (X)</div>
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <button class="reset-btn" id="reset">Reset Game</button>
+    </div>
 
-  <div class="heart-container">
-    <div class="heart"></div>
-  </div>
-
-  <div class="custom-audio">
-    <select id="trackList" onchange="changeTrack(this.value)">
-      <option value="https://www.dropbox.com/scl/fi/1l6sz3j5gpj46yhuqf7no/Thudarum-Kanmanipoove-Mohanlal-Jakes-Bejoy-Shobana-M.GSreekumar-TharunMoorthy-MRenjith-TubeRipper.com.mp3?rlkey=l3jy74ykrf5j3nz1fzf9ylhze&raw=1">Thudarum Kanmanipoove</option>
-      <option value="https://www.dropbox.com/scl/fi/c3b1qporj7rwmiyuzjh40/Aarum-Kaanaathe_Shaan-Rahman.mp3?rlkey=7mlqhcexr9hv25qr4z1xfc1fr&raw=1">Aarum Kaanaathe</option>
-      <option value="https://www.dropbox.com/scl/fi/xmuonqw4ytxq85ep3q80r/Aval-From-Op-16018-Kakshi-Amminippilla_Arun-Muraleedharan.mp3?rlkey=pwh5t9lyq4wh02trvla553ggl&raw=1">Aval (Op 16018)</option>
-      <option value="https://www.dropbox.com/scl/fi/6qr23l4f2esg7j1dddxp2/Charminar-Neela-Shalabhame-Official-Video-Song-Ashwin-Kumar-Sachin-Warrier-Gayathri-Suresh-TubeRipper.com.mp3?rlkey=i5on7u1lhhjjts4e1bvddc867&raw=1">Neela Shalabhame</option>
-      <option value="https://www.dropbox.com/scl/fi/dwckwzd46i00w35dwbu02/Ennum-Ninne_K.-J.-Yesudas.mp3?rlkey=yy7yayddrx23rn1bv37ixmw52&raw=1">Ennum Ninne</option>
-      <option value="https://www.dropbox.com/scl/fi/ya5bkwhmn5z5vf7klhzdr/Etho-Sayana_Sachin-Warrier.mp3?rlkey=gpht9tqebzp0j1atfpb46j2kj&raw=1">Etho Sayana</option>
-      <option value="https://www.dropbox.com/scl/fi/1jgncrmnqi1g038ezcz1r/Junile-Nilamazhayil-Nammal-Thammil-Video-Prithviraj-K-J-Yesudas-Sujatha-M-Jayachandran-TubeRipper.com.mp3?rlkey=oo5x6a075dy3r1rx717n3j36n&raw=1">Junile Nilamazhayil</option>
-      <option value="https://www.dropbox.com/scl/fi/4g0u2hjlsll8e8glgjluy/Sukhamaanee-Nilaavu_Vidhu-Prathap.mp3?rlkey=37wq9puk11j26ufpx0b91c7rf&raw=1">Sukhamaanee Nilaavu</option>
-      <option value="https://www.dropbox.com/scl/fi/6selzlwgs9vyct0ajm1fm/Sita-Kalyanam_Renuka-Arun.mp3?rlkey=m8wqcpb3curz72jper1t52zs7&raw=1">Sita Kalyanam</option>
-      <option value="https://www.dropbox.com/scl/fi/lhk47a1d6tcvz8bwwwawg/Kattumele_Hesham-Abdul-Wahab.mp3?rlkey=sz5dttpu6rbq6a5evynosby83&raw=1">Kattumele</option>
-      <option value="https://www.dropbox.com/scl/fi/6puv6fe8cteosbmat3lqx/Karimizhi-Kuruviye-Kandilla-Video-Song-Meesamadhavan-Dileep-Kavya-Madhavan-TubeRipper.com.mp3?rlkey=zzhjnug0xfexesawzpbnx1xii&raw=1">Karimizhi Kuruviye</option>
-      <option value="https://www.dropbox.com/scl/fi/t6jq70xt3xpdmtnv3jj6r/Kolakkuzhal-Vili-Ketto-Lyrical-Video-Nivedyam-Vinu-Mohan-Bhama-AK-Lohithadas-TubeRipper.com.mp3?rlkey=wa4yucs7jwt67yrigd0bqhk8l&raw=1">Kolakkuzhal Vili Ketto</option>
-      <option value="https://www.dropbox.com/scl/fi/hkvryzu9u8d7hm96a40b6/Vanil-Chandrika_Arvind-Venugopal.mp3?rlkey=1tdgio3dvt1mh4j4w6e6uzulq&raw=1">Vanil Chandrika</option>
-      <option value="https://www.dropbox.com/scl/fi/k9fyjjgztyhemjgw9yg9p/Vaanam_K.-S.-Harisankar.mp3?rlkey=f6lablaocd6i4q8bnknkukkx8&raw=1">Vaanam</option>
-    </select>
-    <audio id="audioPlayer" controls>
-      <source src="https://www.dropbox.com/scl/fi/1l6sz3j5gpj46yhuqf7no/Thudarum-Kanmanipoove-Mohanlal-Jakes-Bejoy-Shobana-M.GSreekumar-TharunMoorthy-MRenjith-TubeRipper.com.mp3?rlkey=l3jy74ykrf5j3nz1fzf9ylhze&raw=1" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
-  </div>
-
-  <div class="sparkles" id="sparkles"></div>
-
-  <script>
-    function createSparkle() {
-      const sparkle = document.createElement('div');
-      sparkle.classList.add('sparkle');
-      sparkle.style.left = Math.random() * 100 + 'vw';
-      sparkle.style.top = Math.random() * 100 + 'vh';
-      sparkle.style.animationDelay = Math.random() * 1.2 + 's';
-      const size = 6 + Math.random() * 6;
-      sparkle.style.width = size + 'px';
-      sparkle.style.height = size + 'px';
-      const colors = ['#ffffff', '#ff6666', '#ff9999'];
-      sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
-      document.getElementById('sparkles').appendChild(sparkle);
-      setTimeout(() => sparkle.remove(), 1200);
-    }
-
-    function changeTrack(url) {
-      const player = document.getElementById("audioPlayer");
-      player.src = url;
-      player.play();
-    }
-
-    setInterval(createSparkle, 50);
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.getElementById('board');
+            const cells = document.querySelectorAll('.cell');
+            const status = document.getElementById('status');
+            const resetBtn = document.getElementById('reset');
+            const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+            
+            let currentPlayer = 'X'; // Human is X, AI is O
+            let gameState = ['', '', '', '', '', '', '', '', ''];
+            let gameActive = true;
+            let difficulty = 'easy'; // easy, medium, hard
+            
+            const winningConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+            
+            // Set difficulty
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    difficultyBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    difficulty = btn.dataset.difficulty;
+                });
+            });
+            
+            function handleCellClick(e) {
+                const clickedCell = e.target;
+                const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+                
+                if (gameState[clickedCellIndex] !== '' || !gameActive || currentPlayer !== 'X') {
+                    return;
+                }
+                
+                // Human move
+                makeMove(clickedCellIndex, 'X');
+                
+                // Check if game continues
+                if (gameActive) {
+                    // AI move after a short delay
+                    setTimeout(() => {
+                        makeAIMove();
+                    }, 500);
+                }
+            }
+            
+            function makeMove(cellIndex, player) {
+                gameState[cellIndex] = player;
+                cells[cellIndex].textContent = player;
+                
+                checkResult();
+            }
+            
+            function makeAIMove() {
+                if (!gameActive) return;
+                
+                currentPlayer = 'O';
+                status.textContent = "AI is thinking...";
+                
+                // Add slight delay to make AI feel more natural
+                setTimeout(() => {
+                    let move;
+                    
+                    switch(difficulty) {
+                        case 'easy':
+                            move = getRandomMove();
+                            break;
+                        case 'medium':
+                            move = Math.random() > 0.5 ? getWinningOrBlockingMove() : getRandomMove();
+                            break;
+                        case 'hard':
+                            move = getBestMove();
+                            break;
+                        default:
+                            move = getRandomMove();
+                    }
+                    
+                    makeMove(move, 'O');
+                    currentPlayer = 'X';
+                    status.textContent = "Your turn (X)";
+                }, 500);
+            }
+            
+            function getRandomMove() {
+                const availableMoves = gameState
+                    .map((cell, index) => cell === '' ? index : null)
+                    .filter(val => val !== null);
+                
+                return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
+            
+            function getWinningOrBlockingMove() {
+                // Check if AI can win
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    if (gameState[a] === 'O' && gameState[b] === 'O' && gameState[c] === '') return c;
+                    if (gameState[a] === 'O' && gameState[c] === 'O' && gameState[b] === '') return b;
+                    if (gameState[b] === 'O' && gameState[c] === 'O' && gameState[a] === '') return a;
+                }
+                
+                // Check if AI needs to block player
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    if (gameState[a] === 'X' && gameState[b] === 'X' && gameState[c] === '') return c;
+                    if (gameState[a] === 'X' && gameState[c] === 'X' && gameState[b] === '') return b;
+                    if (gameState[b] === 'X' && gameState[c] === 'X' && gameState[a] === '') return a;
+                }
+                
+                // Try to take center if available
+                if (gameState[4] === '') return 4;
+                
+                // Try to take a corner
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(index => gameState[index] === '');
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+                
+                // Otherwise random move
+                return getRandomMove();
+            }
+            
+            function getBestMove() {
+                // Minimax algorithm for perfect AI
+                function minimax(newBoard, player) {
+                    const availableSpots = newBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+                    
+                    // Check terminal states
+                    if (checkWin(newBoard, 'X')) return {score: -10};
+                    if (checkWin(newBoard, 'O')) return {score: 10};
+                    if (availableSpots.length === 0) return {score: 0};
+                    
+                    const moves = [];
+                    
+                    for (let i = 0; i < availableSpots.length; i++) {
+                        const move = {};
+                        move.index = availableSpots[i];
+                        newBoard[availableSpots[i]] = player;
+                        
+                        if (player === 'O') {
+                            const result = minimax(newBoard, 'X');
+                            move.score = result.score;
+                        } else {
+                            const result = minimax(newBoard, 'O');
+                            move.score = result.score;
+                        }
+                        
+                        newBoard[availableSpots[i]] = '';
+                        moves.push(move);
+                    }
+                    
+                    let bestMove;
+                    if (player === 'O') {
+                        let bestScore = -Infinity;
+                        for (let i = 0; i < moves.length; i++) {
+                            if (moves[i].score > bestScore) {
+                                bestScore = moves[i].score;
+                                bestMove = i;
+                            }
+                        }
+                    } else {
+                        let bestScore = Infinity;
+                        for (let i = 0; i < moves.length; i++) {
+                            if (moves[i].score < bestScore) {
+                                bestScore = moves[i].score;
+                                bestMove = i;
+                            }
+                        }
+                    }
+                    
+                    return moves[bestMove];
+                }
+                
+                return minimax([...gameState], 'O').index;
+            }
+            
+            function checkWin(board, player) {
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    if (board[a] === player && board[b] === player && board[c] === player) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            function checkResult() {
+                if (checkWin(gameState, 'X')) {
+                    status.textContent = 'You win!';
+                    gameActive = false;
+                    showWinnerAnimation('You Win!');
+                    return;
+                }
+                
+                if (checkWin(gameState, 'O')) {
+                    status.textContent = 'AI wins!';
+                    gameActive = false;
+                    showWinnerAnimation('AI Wins!');
+                    return;
+                }
+                
+                if (!gameState.includes('')) {
+                    status.textContent = 'Game ended in a draw!';
+                    gameActive = false;
+                    return;
+                }
+            }
+            
+            function showWinnerAnimation(message) {
+                // Create confetti
+                for (let i = 0; i < 100; i++) {
+                    createConfetti();
+                }
+                
+                // Create winner message
+                const winnerMessage = document.createElement('div');
+                winnerMessage.className = 'winner-message';
+                winnerMessage.textContent = message;
+                document.body.appendChild(winnerMessage);
+                
+                // Remove message after animation
+                setTimeout(() => {
+                    winnerMessage.remove();
+                }, 2000);
+            }
+            
+            function createConfetti() {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random position
+                const left = Math.random() * 100;
+                confetti.style.left = `${left}vw`;
+                
+                // Random delay
+                const delay = Math.random() * 2;
+                confetti.style.animationDelay = `${delay}s`;
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                
+                // Random shape
+                if (Math.random() > 0.5) {
+                    confetti.style.borderRadius = '50%';
+                }
+                
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+            
+            function resetGame() {
+                currentPlayer = 'X';
+                gameState = ['', '', '', '', '', '', '', '', ''];
+                gameActive = true;
+                status.textContent = 'Your turn (X)';
+                
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                });
+            }
+            
+            cells.forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+            });
+            
+            resetBtn.addEventListener('click', resetGame);
+        });
+    </script>
 </body>
 </html>
